@@ -313,6 +313,10 @@ export interface AssetFilterProps {
    */
   dataSetIds?: IdEither[];
   /**
+   * Only include assets that reference any/none dataSet IDs
+   */
+  dataSetId?: NullableFilter;
+  /**
    * Only include assets in subtrees rooted at the specified assets.
    * If the total size of the given subtrees exceeds 100,000 assets, an error will be returned.
    */
@@ -832,6 +836,10 @@ export interface EventFilter extends CreatedAndLastUpdatedTimeFilter {
    */
   dataSetIds?: IdEither[];
   /**
+   * Only include events that reference any/none dataSet IDs
+   */
+  dataSetId?: NullableFilter;
+  /**
    * Only include events that have a related asset in a subtree rooted at any of these assetIds.
    * If the total size of the given subtrees exceeds 100,000 assets, an error will be returned.
    */
@@ -1024,6 +1032,10 @@ export interface FileFilterProps {
    * Only include items that reference these specific dataSet IDs
    */
   dataSetIds?: IdEither[];
+  /**
+   * Only include items that reference any/none dataSet IDs
+   */
+  dataSetId?: NullableFilter;
   /**
    * Only include files that are related to an asset in a subtree rooted at any of these assetIds.
    * If the total size of the given subtrees exceeds 100,000 assets, an error will be returned.
@@ -1394,6 +1406,10 @@ export interface Node3DProperties {
   [category: string]: {
     [key: string]: string;
   };
+}
+
+export interface NullableFilter {
+  isNull: boolean;
 }
 
 export type NullableProperty<T> = T | { isNull: boolean };
@@ -1793,6 +1809,7 @@ export interface SequenceFilter {
      */
     rootAssetIds?: CogniteInternalId[];
     dataSetIds?: IdEither[];
+    dataSetId?: NullableFilter;
     /**
      * Only include sequences that have a related asset in a subtree rooted at any of these assetIds.
      * If the total size of the given subtrees exceeds 100,000 assets, an error will be returned.
@@ -2082,9 +2099,14 @@ interface TimeseriesFilterProps extends CreatedAndLastUpdatedTimeFilter {
    */
   rootAssetIds?: CogniteInternalId[];
   /**
-   * Only include assets that reference these specific dataSet IDs
+   * Only include timeseries that reference these specific dataSet IDs
    */
   dataSetIds?: IdEither[];
+  /**
+   * Only include timeseries that reference any/none dataSet IDs
+   */
+  dataSetId?: NullableFilter;
+
   /**
    * Only include timeseries that are related to an asset in a subtree rooted at any of these assetIds.
    * If the total size of the given subtrees exceeds 100,000 assets, an error will be returned.
