@@ -3,6 +3,7 @@
 import nock from 'nock';
 import { AUTHORIZATION_HEADER } from '../constants';
 import { CDFHttpClient } from '../httpClient/cdfHttpClient';
+import { logger, LoggerEventTypes } from '../logger';
 import {
   getIdInfoFromAccessToken,
   loginSilently,
@@ -26,8 +27,11 @@ describe('Login', () => {
     mockBaseUrl,
     createUniversalRetryValidator()
   );
+  const loggerFunc = jest.fn();
+  logger.attach(project, loggerFunc).enable(project);
 
   beforeEach(() => {
+    loggerFunc.mockReset();
     window.history.pushState({}, '', '');
     nock.cleanAll();
   });
@@ -49,6 +53,7 @@ describe('Login', () => {
     const spiedRemoveChild = jest.spyOn(document.body, 'removeChild');
     beforeEach(() => {
       spiedCreateElement.mockReset();
+      spiedAppendChild.mockClear();
       spiedRemoveChild.mockReset();
       window.history.pushState({}, '', '');
     });
@@ -59,14 +64,56 @@ describe('Login', () => {
     });
 
     test('exception on error query params', async () => {
-      window.history.pushState(
-        {},
-        '',
-        `/some/random/path?query=true&error=failed&error_description=message`
-      );
-      await expect(
-        loginSilently(httpClient, authorizeParams)
-      ).rejects.toThrowErrorMatchingInlineSnapshot(`"failed: message"`);
+      const uri = `/some/random/path`;
+      const search = `?query=true&error=failed&error_description=message`;
+      window.history.pushState({}, '', uri + search);
+      let errorMessage: string = '';
+      let error: string = '';
+      let query: string = '';
+      let errorDescription: string = '';
+      try {
+        await loginSilently(httpClient, authorizeParams);
+      } catch ({ message, data = {} }) {
+        errorMessage = message;
+        ({ error, query, errorDescription } = data);
+      }
+      expect(errorMessage).toBe(`Failed to parse token query parameters`);
+      expect(error).toBe(`failed`);
+      expect(query).toBe(search);
+      expect(errorDescription).toBe(`message`);
+    });
+
+    test('trigger logger on error in query params for the iframe', async () => {
+      const iframeUrl = `?query=true&error=failed&error_description=message`;
+      window.history.pushState({}, '', '/abc/def');
+      const iframe = createIframe(iframeUrl);
+      spiedCreateElement.mockReturnValueOnce(iframe);
+
+      await loginSilently(httpClient, authorizeParams);
+
+      expect(loggerFunc.mock.calls[0][0].data).toEqual({
+        type: LoggerEventTypes.Error,
+        query: iframeUrl,
+        error: 'failed',
+        errorDescription: 'message',
+      });
+    });
+
+    test('trigger logger on nullable token query', async () => {
+      const iframeUrl = `?query=true`;
+      window.history.pushState({}, '', '/abc/def');
+      const iframe = createIframe(iframeUrl);
+      spiedCreateElement.mockReturnValueOnce(iframe);
+
+      await loginSilently(httpClient, authorizeParams);
+
+      const {
+        message,
+        data: { url, params, type },
+      } = loggerFunc.mock.calls[0][0];
+
+      expect(message).toBe(`Failed to login due nullable tokens`);
+      expect(url && params && type).toBeTruthy();
     });
 
     function createIframe(search: string) {

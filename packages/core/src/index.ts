@@ -17,6 +17,7 @@ export { CogniteError } from './error';
 export { CogniteMultiError } from './multiError';
 export { CogniteLoginError } from './loginError';
 export { HttpError } from './httpClient/httpError';
+export { LoggerFunc, LoggerEventTypes } from './logger';
 export {
   HttpResponse,
   HttpHeaders,

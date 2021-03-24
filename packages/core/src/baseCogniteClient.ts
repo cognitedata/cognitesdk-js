@@ -17,6 +17,7 @@ import {
   HttpResponse,
 } from './httpClient/basicHttpClient';
 import { CDFHttpClient } from './httpClient/cdfHttpClient';
+import { logger, LoggerFunc } from './logger';
 import {
   createAuthenticateFunction,
   OnAuthenticate,
@@ -42,6 +43,7 @@ export interface ClientOptions {
   /** App identifier (ex: 'FileExtractor') */
   appId: string;
   baseUrl?: string;
+  debug?: boolean;
 }
 
 export interface Project {
@@ -153,12 +155,17 @@ export default class BaseCogniteClient {
     this.metadata = new MetadataMap();
     this.loginApi = new LoginAPI(this.httpClient, this.metadataMap);
     this.logoutApi = new LogoutApi(this.httpClient, this.metadataMap);
+    if (options.debug) {
+      logger.attach(this.projectName).enable(this.projectName);
+    }
   }
 
   public authenticate: () => Promise<boolean> = async () => {
-    throw Error(
-      'You can only call authenticate after you have called loginWithOAuth'
-    );
+    const message = `You can only call authenticate after you have called loginWithOAuth`;
+
+    logger.log(this.projectName, message);
+
+    throw Error(message);
   };
 
   public setProject(projectName: string) {
@@ -441,6 +448,14 @@ export default class BaseCogniteClient {
 
   public setOneTimeSdkHeader(value: string) {
     this.httpClient.addOneTimeHeader(X_CDF_SDK_HEADER, value);
+  }
+
+  public attachLogger(loggerFunc: LoggerFunc) {
+    logger.attach(this.projectName, loggerFunc).enable(this.projectName);
+  }
+
+  public detachLogger() {
+    logger.detach(this.projectName);
   }
 
   protected initAPIs() {
