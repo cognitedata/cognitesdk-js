@@ -9,7 +9,7 @@
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
     "downlevelIteration": true,
-    "lib": ["es2015", "dom", "esnext.asynciterable", "es2017.object"],
+    "lib": ["es2015", "dom", "esnext.asynciterable", "es2017.object", "es2018.promise"],
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitAny": true,

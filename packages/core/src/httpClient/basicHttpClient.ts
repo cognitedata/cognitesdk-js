@@ -96,17 +96,17 @@ export class BasicHttpClient {
     return { ...this.defaultHeaders };
   }
 
-  public setBaseUrl(baseUrl: string) {
+  public setBaseUrl = (baseUrl: string) => {
     this.baseUrl = baseUrl;
-  }
+  };
 
   public getBaseUrl() {
     return this.baseUrl;
   }
 
-  public setCluster(cluster: string) {
+  public setCluster = (cluster: string) => {
     this.baseUrl = `https://${cluster}.${DEFAULT_DOMAIN}`;
-  }
+  };
 
   public get<ResponseType>(path: string, options: HttpRequestOptions = {}) {
     return this.request<ResponseType>({

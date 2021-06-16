@@ -21,6 +21,9 @@ function findAllCodeSnippetsInJsDoc(jsDoc) {
     while ((matches = docRegEx.exec(value))) {
       const operationId = matches[2];
       const rawCode = object.text;
+      if (!rawCode) {
+        continue;
+      }
       if (!codeSnippets.has(operationId)) {
         codeSnippets.set(operationId, []);
       }

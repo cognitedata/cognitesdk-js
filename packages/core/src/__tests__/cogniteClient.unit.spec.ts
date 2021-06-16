@@ -1,8 +1,8 @@
 // Copyright 2020 Cognite AS
 
 import nock from 'nock';
-import BaseCogniteClient, { AAD_OAUTH, CDF_OAUTH } from '../baseCogniteClient';
-import { POPUP, REDIRECT } from '../auth';
+import BaseCogniteClient from '../baseCogniteClient';
+import { POPUP, REDIRECT } from '../authFlows/legacy';
 import {
   API_KEY_HEADER,
   AUTHORIZATION_HEADER,
@@ -10,16 +10,17 @@ import {
   BASE_URL,
 } from '../constants';
 import * as LoginUtils from '../loginUtils';
-import { ADFS } from '../adfs';
+import { ADFS } from '../authFlows/adfs';
 import { bearerString, sleepPromise } from '../utils';
 import { apiKey, authTokens, loggedInResponse, project } from '../testUtils';
+import { TokenSet } from 'openid-client';
 
 const initAuth = jest.fn();
 const login = jest.fn();
 const getCDFToken = jest.fn();
 const getCluster = jest.fn();
 
-jest.mock('../aad', () => {
+jest.mock('../authFlows/aad', () => {
   return {
     AzureAD: jest.fn().mockImplementation(() => {
       return {
@@ -27,6 +28,22 @@ jest.mock('../aad', () => {
         login,
         getCDFToken,
         getCluster,
+      };
+    }),
+  };
+});
+
+const openidInit = jest.fn();
+const openidGetCDFToken = jest.fn();
+const openidGetAuthTokens = jest.fn();
+
+jest.mock('../authFlows/oidc_client_credentials_flow', () => {
+  return {
+    OidcClientCredentials: jest.fn().mockImplementation(() => {
+      return {
+        init: openidInit,
+        getCDFToken: openidGetCDFToken,
+        getAuthTokens: openidGetAuthTokens,
       };
     }),
   };
@@ -220,15 +237,22 @@ describe('CogniteClient', () => {
         // @ts-ignore
         async () => await client.loginWithOAuth()
       ).rejects.toThrowErrorMatchingInlineSnapshot(
+        `"\`loginWithOAuth\` is missing parameter \`flow\`"`
+      );
+      await expect(
+        // @ts-ignore
+        async () => await client.loginWithOAuth({ type: 'CDF_OAUTH' })
+      ).rejects.toThrowErrorMatchingInlineSnapshot(
         `"\`loginWithOAuth\` is missing parameter \`options\`"`
       );
     });
 
-    test('missing project name', async () => {
+    test('invalid flow type', async () => {
       const client = setupClient();
       await expect(
-        // @ts-ignore
-        async () => await client.loginWithOAuth({})
+        async () =>
+          // @ts-ignore
+          await client.loginWithOAuth({ type: 'INVALID_FLOW', options: {} })
       ).rejects.toThrowErrorMatchingInlineSnapshot(
         `"\`loginWithOAuth\` is missing correct \`options\` structure"`
       );
@@ -254,7 +278,10 @@ describe('CogniteClient', () => {
 
       test('default onAuthenticate function should be redirect', async done => {
         const client = setupClient();
-        await client.loginWithOAuth({ project });
+        await client.loginWithOAuth({
+          type: 'CDF_OAUTH',
+          options: { project },
+        });
         mockRedirect.mockImplementationOnce(async () => {
           done();
         });
@@ -264,22 +291,28 @@ describe('CogniteClient', () => {
       test('should return cdf oauth flow type in case cdf oauth usage', async () => {
         const client = setupClient();
         await client.loginWithOAuth({
-          project,
-          onAuthenticate: POPUP,
+          type: 'CDF_OAUTH',
+          options: {
+            project,
+            onAuthenticate: POPUP,
+          },
         });
         mockPopup.mockImplementationOnce(async () => {
           return {};
         });
         await client.authenticate();
 
-        expect(client.getOAuthFlowType()).toEqual(CDF_OAUTH);
+        expect(client.getOAuthFlowType()).toEqual('CDF_OAUTH');
       });
 
       test('onAuthenticate: REDIRECT', async done => {
         const client = setupClient();
         await client.loginWithOAuth({
-          project,
-          onAuthenticate: REDIRECT,
+          type: 'CDF_OAUTH',
+          options: {
+            project,
+            onAuthenticate: REDIRECT,
+          },
         });
         mockRedirect.mockImplementationOnce(async () => {
           done();
@@ -290,8 +323,11 @@ describe('CogniteClient', () => {
       test('onAuthenticate: POPUP', async done => {
         const client = setupClient();
         await client.loginWithOAuth({
-          project,
-          onAuthenticate: POPUP,
+          type: 'CDF_OAUTH',
+          options: {
+            project,
+            onAuthenticate: POPUP,
+          },
         });
         mockPopup.mockImplementationOnce(async () => {
           done();
@@ -304,8 +340,11 @@ describe('CogniteClient', () => {
         const onAuthenticate = jest.fn();
         const client = setupClient(mockBaseUrl);
         await client.loginWithOAuth({
-          project,
-          onAuthenticate,
+          type: 'CDF_OAUTH',
+          options: {
+            project,
+            onAuthenticate,
+          },
         });
         onAuthenticate.mockImplementation(login => {
           login.skip();
@@ -345,8 +384,11 @@ describe('CogniteClient', () => {
           .reply(200, loggedInResponse);
 
         const isAuthenticated = await client.loginWithOAuth({
-          project,
-          onAuthenticate,
+          type: 'CDF_OAUTH',
+          options: {
+            project,
+            onAuthenticate,
+          },
         });
 
         client.setOneTimeSdkHeader(disposableSdkHeader);
@@ -375,8 +417,11 @@ describe('CogniteClient', () => {
         });
         const client = setupClient(mockBaseUrl);
         await client.loginWithOAuth({
-          project,
-          onAuthenticate,
+          type: 'CDF_OAUTH',
+          options: {
+            project,
+            onAuthenticate,
+          },
         });
         await expect(client.authenticate()).resolves.toBe(false);
       });
@@ -390,8 +435,11 @@ describe('CogniteClient', () => {
         );
         const client = setupClient(mockBaseUrl);
         const result = await client.loginWithOAuth({
-          project,
-          onHandleRedirectError,
+          type: 'CDF_OAUTH',
+          options: {
+            project,
+            onHandleRedirectError,
+          },
         });
 
         expect(result).toEqual(false);
@@ -404,8 +452,11 @@ describe('CogniteClient', () => {
           .mockResolvedValueOnce(authTokens);
         const client = setupClient(mockBaseUrl);
         await client.loginWithOAuth({
-          project,
-          onAuthenticate: POPUP,
+          type: 'CDF_OAUTH',
+          options: {
+            project,
+            onAuthenticate: POPUP,
+          },
         });
         nock(mockBaseUrl, { badheaders: [AUTHORIZATION_HEADER] })
           .get('/')
@@ -433,8 +484,11 @@ describe('CogniteClient', () => {
           login.skip();
         });
         await client.loginWithOAuth({
-          project,
-          onAuthenticate,
+          type: 'CDF_OAUTH',
+          options: {
+            project,
+            onAuthenticate,
+          },
         });
         nock(mockBaseUrl)
           .get('/401')
@@ -455,8 +509,11 @@ describe('CogniteClient', () => {
         test('should be able to provide an access token', async () => {
           const client = setupClient(mockBaseUrl);
           await client.loginWithOAuth({
-            project,
-            accessToken: authTokens.accessToken,
+            type: 'CDF_OAUTH',
+            options: {
+              project,
+              accessToken: authTokens.accessToken,
+            },
           });
           nock(mockBaseUrl, {
             reqheaders: {
@@ -472,9 +529,12 @@ describe('CogniteClient', () => {
         test('re-authenticate on 401', async done => {
           const client = setupClient(mockBaseUrl);
           await client.loginWithOAuth({
-            project,
-            accessToken: authTokens.accessToken,
-            onAuthenticate: () => done(),
+            type: 'CDF_OAUTH',
+            options: {
+              project,
+              accessToken: authTokens.accessToken,
+              onAuthenticate: () => done(),
+            },
           });
           nock(mockBaseUrl)
             .get('/')
@@ -486,10 +546,12 @@ describe('CogniteClient', () => {
         test('get cdf token with cognite auth flow', async () => {
           const client = setupClient(mockBaseUrl);
           await client.loginWithOAuth({
-            project,
-            onAuthenticate: POPUP,
+            type: 'CDF_OAUTH',
+            options: {
+              project,
+              onAuthenticate: POPUP,
+            },
           });
-
           mockPopup.mockImplementationOnce(async () => {
             return { ...authTokens };
           });
@@ -508,10 +570,12 @@ describe('CogniteClient', () => {
         test("get cdf token as null if it's outdated with cognite auth flow", async () => {
           const client = setupClient(mockBaseUrl);
           await client.loginWithOAuth({
-            project,
-            onAuthenticate: POPUP,
+            type: 'CDF_OAUTH',
+            options: {
+              project,
+              onAuthenticate: POPUP,
+            },
           });
-
           mockPopup.mockImplementationOnce(async () => {
             return { ...authTokens };
           });
@@ -528,6 +592,48 @@ describe('CogniteClient', () => {
           expect(result).toEqual(true);
           expect(tokens).toEqual(null);
         });
+      });
+    });
+
+    describe('authentication with client credentials', () => {
+      const clientId = 'clientId';
+      const clientSecret = 'clientSecret';
+      const openIdConfigurationUrl = `https://login.microsoftonline.com/<TEST>/v2.0/.well-known/openid-configuration`;
+      const cluster = 'test-cluster';
+      const scope = 'https://bluefield.cognitedata.com/.default';
+      const authenticate = jest.fn();
+
+      let client: BaseCogniteClient;
+
+      beforeEach(() => {
+        client = new BaseCogniteClient({ appId: 'test-app' });
+      });
+      afterEach(() => {
+        jest.clearAllMocks();
+      });
+
+      test('should return true when authenticated', async () => {
+        openidInit.mockResolvedValueOnce([authenticate, null]);
+        authenticate.mockResolvedValueOnce(true);
+        openidGetAuthTokens.mockResolvedValueOnce({
+          access_token: cdfToken,
+        } as TokenSet);
+
+        const result = await client.loginWithOAuth({
+          type: 'OIDC_CLIENT_CREDENTIALS_FLOW',
+          options: {
+            clientId,
+            clientSecret,
+            cluster,
+            openIdConfigurationUrl,
+            scope,
+          },
+        });
+
+        expect(openidInit).toHaveBeenCalledTimes(1);
+        expect(result).toEqual(false);
+        const authenticateResult = await client.authenticate();
+        expect(authenticateResult).toEqual(true);
       });
     });
 
@@ -555,9 +661,12 @@ describe('CogniteClient', () => {
         getCluster.mockReturnValueOnce(cluster);
 
         const result = await client.loginWithOAuth({
-          clientId,
-          tenantId,
-          cluster,
+          type: 'AAD_OAUTH',
+          options: {
+            clientId,
+            tenantId,
+            cluster,
+          },
         });
 
         expect(login).toHaveBeenCalledTimes(0);
@@ -573,10 +682,13 @@ describe('CogniteClient', () => {
         getCluster.mockReturnValueOnce(cluster);
 
         await client.loginWithOAuth({
-          clientId,
-          tenantId,
-          cluster,
-          signInType: { type: 'loginPopup' },
+          type: 'AAD_OAUTH',
+          options: {
+            clientId,
+            tenantId,
+            cluster,
+            signInType: { type: 'loginPopup' },
+          },
         });
 
         const result = await client.authenticate();
@@ -593,9 +705,12 @@ describe('CogniteClient', () => {
         getCluster.mockReturnValueOnce(cluster);
 
         const oAuthResult = await client.loginWithOAuth({
-          clientId,
-          tenantId,
-          cluster,
+          type: 'AAD_OAUTH',
+          options: {
+            clientId,
+            tenantId,
+            cluster,
+          },
         });
         const authResult = await client.authenticate();
 
@@ -611,9 +726,12 @@ describe('CogniteClient', () => {
         getCluster.mockReturnValueOnce(cluster);
 
         const oAuthResult = await client.loginWithOAuth({
-          clientId,
-          tenantId,
-          cluster,
+          type: 'AAD_OAUTH',
+          options: {
+            clientId,
+            tenantId,
+            cluster,
+          },
         });
 
         const authResult = await client.authenticate();
@@ -632,7 +750,13 @@ describe('CogniteClient', () => {
         getCDFToken.mockResolvedValue(cdfToken);
         getCluster.mockReturnValueOnce(cluster);
 
-        const oAuthResult = await client.loginWithOAuth({ clientId, cluster });
+        const oAuthResult = await client.loginWithOAuth({
+          type: 'AAD_OAUTH',
+          options: {
+            clientId,
+            cluster,
+          },
+        });
 
         const authResult = await client.authenticate();
 
@@ -655,7 +779,13 @@ describe('CogniteClient', () => {
         getCDFToken.mockResolvedValueOnce(cdfToken);
         getCluster.mockReturnValueOnce(cluster);
 
-        const oAuthResult = await client.loginWithOAuth({ clientId, cluster });
+        const oAuthResult = await client.loginWithOAuth({
+          type: 'AAD_OAUTH',
+          options: {
+            clientId,
+            cluster,
+          },
+        });
         const authResult = await client.authenticate();
 
         expect(oAuthResult).toEqual(false);
@@ -672,14 +802,20 @@ describe('CogniteClient', () => {
         getCDFToken.mockResolvedValue(cdfToken);
         getCluster.mockReturnValueOnce(cluster);
 
-        await client.loginWithOAuth({ clientId, cluster });
+        await client.loginWithOAuth({
+          type: 'AAD_OAUTH',
+          options: { clientId, cluster },
+        });
 
         const result = await client.authenticate();
         expect(result).toEqual(true);
-        expect(client.getOAuthFlowType()).toEqual(AAD_OAUTH);
+        expect(client.getOAuthFlowType()).toEqual('AAD_OAUTH');
       });
       test('should throw error on attempt to get Azure AD access token with cognite auth flow', async () => {
-        await client.loginWithOAuth({ project });
+        await client.loginWithOAuth({
+          type: 'CDF_OAUTH',
+          options: { project },
+        });
         await expect(
           async () => await client.getAzureADAccessToken()
         ).rejects.toThrowErrorMatchingInlineSnapshot(
@@ -694,7 +830,10 @@ describe('CogniteClient', () => {
         getCDFToken.mockResolvedValue('access_token');
         getCluster.mockReturnValueOnce(cluster);
 
-        await client.loginWithOAuth({ clientId, tenantId, cluster });
+        await client.loginWithOAuth({
+          type: 'AAD_OAUTH',
+          options: { clientId, tenantId, cluster },
+        });
 
         const result = await client.authenticate();
 
@@ -716,10 +855,13 @@ describe('CogniteClient', () => {
         getCluster.mockReturnValueOnce(cluster);
 
         const result = await client.loginWithOAuth({
-          clientId,
-          tenantId,
-          cluster,
-          onNoProjectAvailable,
+          type: 'AAD_OAUTH',
+          options: {
+            clientId,
+            tenantId,
+            cluster,
+            onNoProjectAvailable,
+          },
         });
 
         expect(result).toBe(false);
@@ -737,11 +879,14 @@ describe('CogniteClient', () => {
         getCDFToken.mockResolvedValue('access_token');
 
         const silentLogin = await client.loginWithOAuth({
-          clientId,
-          tenantId,
-          cluster,
-          signInType: { type: 'loginPopup' },
-          onNoProjectAvailable,
+          type: 'AAD_OAUTH',
+          options: {
+            clientId,
+            tenantId,
+            cluster,
+            signInType: { type: 'loginPopup' },
+            onNoProjectAvailable,
+          },
         });
 
         const authenticated = await client.authenticate();
@@ -792,8 +937,11 @@ describe('CogniteClient', () => {
           .reply(200, { projects: ['project1', 'project2'] });
 
         const result = await client.loginWithOAuth({
-          authority,
-          requestParams,
+          type: 'ADFS_OAUTH',
+          options: {
+            authority,
+            requestParams,
+          },
         });
         const cdfToken = await client.getCDFToken();
 
@@ -816,8 +964,11 @@ describe('CogniteClient', () => {
           .reply(200, { projects: ['project1', 'project2'] });
 
         const result = await client.loginWithOAuth({
-          authority,
-          requestParams,
+          type: 'ADFS_OAUTH',
+          options: {
+            authority,
+            requestParams,
+          },
         });
 
         const authenticated = await client.authenticate();
@@ -829,6 +980,7 @@ describe('CogniteClient', () => {
       });
       test('should login via redirect when silent login is not possible', async done => {
         const { location } = window;
+        // @ts-ignore
         delete window.location;
         window.location = {
           ...location,
@@ -842,8 +994,11 @@ describe('CogniteClient', () => {
         const spyADFSLoginMethod = jest.spyOn(ADFS.prototype, 'login');
 
         const result = await client.loginWithOAuth({
-          authority,
-          requestParams,
+          type: 'ADFS_OAUTH',
+          options: {
+            authority,
+            requestParams,
+          },
         });
 
         client.authenticate();
@@ -874,9 +1029,12 @@ describe('CogniteClient', () => {
         const onNoProjectAvailable = jest.fn();
 
         const result = await client.loginWithOAuth({
-          authority,
-          requestParams,
-          onNoProjectAvailable,
+          type: 'ADFS_OAUTH',
+          options: {
+            authority,
+            requestParams,
+            onNoProjectAvailable,
+          },
         });
 
         expect(result).toEqual(false);
@@ -895,9 +1053,12 @@ describe('CogniteClient', () => {
         const onNoProjectAvailable = jest.fn();
 
         const result = await client.loginWithOAuth({
-          authority,
-          requestParams,
-          onNoProjectAvailable,
+          type: 'ADFS_OAUTH',
+          options: {
+            authority,
+            requestParams,
+            onNoProjectAvailable,
+          },
         });
         const authenticated = await client.authenticate();
 
@@ -906,6 +1067,10 @@ describe('CogniteClient', () => {
         expect(silentADFSLogin).toHaveBeenCalledTimes(2);
         expect(onNoProjectAvailable).toHaveBeenCalledTimes(1);
       });
+    });
+
+    describe('authentication with oidc authorization code', () => {
+      // TODO
     });
   });
 });

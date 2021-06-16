@@ -55,10 +55,10 @@ const App = () => {
     // You can call `login.popup` whenever you want. The SDK will pause all requests until you have called it.
     // So it is possible to create a user-interface with a "Click here to login"-button that triggers `login.popup`.
     const init = async () => {
-      const result = await client.loginWithOAuth({
+      const result = await client.loginWithOAuth({ type: 'CDF_OAUTH', options: {
         project,
         onAuthenticate: POPUP,
-      });
+      }});
 
       setIsInit(true);
       setIsSignedIn(result);
