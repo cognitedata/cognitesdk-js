@@ -16,6 +16,7 @@ import { AssetsAPI } from './api/assets/assetsApi';
 import { DataPointsAPI } from './api/dataPoints/dataPointsApi';
 import { DataSetsAPI } from './api/datasets/datasetsApi';
 import { EntityMatchingApi } from './api/entityMatching/entityMatchingApi';
+import { DiagramApi } from './api/diagram/diagramApi';
 import { EventsAPI } from './api/events/eventsApi';
 import { FilesAPI } from './api/files/filesApi';
 import { GroupsAPI } from './api/groups/groupsApi';
@@ -93,7 +94,9 @@ export default class CogniteClient extends BaseCogniteClient {
   public get entityMatching() {
     return accessApi(this.entityMatchingApi);
   }
-
+  public get diagram() {
+    return accessApi(this.diagramApi);
+  }
   private assetsApi?: AssetsAPI;
   private timeSeriesApi?: TimeSeriesAPI;
   private dataPointsApi?: DataPointsAPI;
@@ -109,6 +112,7 @@ export default class CogniteClient extends BaseCogniteClient {
   private models3DApi?: Models3DAPI;
   private relationshipsApi?: RelationshipsApi;
   private entityMatchingApi?: EntityMatchingApi;
+  private diagramApi?: DiagramApi;
   private revisions3DApi?: Revisions3DAPI;
   private files3DApi?: Files3DAPI;
   private datasetsApi?: DataSetsAPI;
@@ -152,6 +156,7 @@ export default class CogniteClient extends BaseCogniteClient {
       EntityMatchingApi,
       'context/entitymatching'
     );
+    this.diagramApi = this.apiFactory(DiagramApi, 'context/diagram');
     this.revisions3DApi = this.apiFactory(Revisions3DAPI, models3DPath);
     this.files3DApi = this.apiFactory(Files3DAPI, '3d/files');
     this.assetMappings3DApi = this.apiFactory(AssetMappings3DAPI, models3DPath);

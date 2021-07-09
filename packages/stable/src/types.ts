@@ -2544,7 +2544,17 @@ export const ContextJobStatus = {
  */
 export type ContextJobId = number;
 
-export interface EntityMatchingResponseBase {
+export interface ContextJobInfo {
+  /**
+   * The status of the job.
+   */
+  status: ContextJobStatus;
+  createdTime: Date;
+  startTime: Date;
+  statusTime: Date;
+}
+
+export interface EntityMatchingResponseBase extends ContextJobInfo {
   /**
    * User defined name of the model.
    */
@@ -2553,13 +2563,6 @@ export interface EntityMatchingResponseBase {
    * User defined description of the model
    */
   description: string;
-  /**
-   * The status of the job.
-   */
-  status: ContextJobStatus;
-  createdTime: Date;
-  startTime: Date;
-  statusTime: Date;
 }
 
 export interface ExternalEntityToMatch {
@@ -2882,4 +2885,169 @@ export interface EntityMatchingFilter {
 
 export interface EntityMatchingFilterRequest extends FilterQuery {
   filter?: EntityMatchingFilter;
+}
+
+export interface DiagramResponseBase extends ContextJobInfo {
+  /**
+   * Contextualization job ID.
+   */
+  jobId: ContextJobId;
+}
+
+export interface DiagramDetectConfig {
+  /**
+   * This field determines the string to search for and to identify object entities.
+   */
+  searchField?: string;
+  /**
+   * Allow partial (fuzzy) matching of entities in the engineering diagrams. Creates a match only when it is possible to do so unambiguously.
+   */
+  partialMatch?: string;
+  /**
+   * Each detected item must match the detected entity on at least this number of tokens. A token is a substring of consecutive letters or digits.
+   */
+  minTokens?: number;
+}
+
+type FileIdEither =
+  | {
+      /**
+       * The ID of a file in CDF.
+       */
+      fileId: CogniteInternalId;
+    }
+  | {
+      /**
+       * The external ID of a file in CDF.
+       */
+      fileExternalId: CogniteExternalId;
+    };
+
+type FileIdAndExternalId = {
+  /**
+   * The ID of a file in CDF.
+   */
+  fileId: CogniteInternalId;
+  /**
+   * The external ID of a file in CDF.
+   */
+  fileExternalId?: CogniteExternalId;
+};
+
+export interface DiagramDetectRequest extends DiagramDetectConfig {
+  /**
+   * An array of files (50 maximum) to detect entities in.
+   */
+  items: FileIdEither[];
+  /**
+   * A list of entities to look for in the engineering diagrams. For example, all the assets under a root node. The searchField determines the strings that identify the entities. The value of an entity searchField can be a string or a list of strings. If one of the strings is detected, the entity is added to the detection result.
+   */
+  entities: object[];
+}
+
+export interface DiagramDetectResponse
+  extends DiagramResponseBase,
+    DiagramDetectConfig {}
+
+export interface Vertex {
+  x: number;
+  y: number;
+}
+
+export interface Region {
+  shape: string;
+  vertices: Vertex[];
+  page: number;
+}
+
+export type Shape = 'points' | 'rectangle' | 'polyline' | 'polygon';
+
+export const Shape = {
+  POINTS: 'points' as Shape,
+  RECTANGLE: 'rectangle' as Shape,
+  POLYLINE: 'polyline' as Shape,
+  POLYGON: 'polygon' as Shape,
+};
+
+export interface DiagramAnnotation {
+  /**
+   * The entity (e.g. a valve, a pump or text) detected by a computer vision model.
+   */
+  text: string;
+  /**
+   * The confidence for the detection.
+   */
+  confidence: number;
+  /**
+   * Shape and coordinates of the detected entity in the file.
+   */
+  region: Region;
+  /**
+   * A list of entities to look for in the engineering diagrams. For example, all the assets under a root node. The searchField determines the strings that identify the entities.
+   */
+  entities: object[];
+}
+
+export interface DiagramAnnotations {
+  annotations: DiagramAnnotation[];
+}
+
+export interface ErrorMessage {
+  /**
+   * The error message for the page and file.
+   */
+  errorMessage?: string;
+}
+
+export interface DiagramDetectResultItem
+  extends FileIdAndExternalId,
+    DiagramAnnotations,
+    ErrorMessage {}
+
+export interface DiagramDetectResult extends DiagramDetectResponse {
+  items: DiagramDetectResultItem[];
+}
+
+export type DiagramConvertRequestItem = FileIdEither & DiagramAnnotations;
+
+export interface DiagramConvertConfig {
+  /**
+   * Return the SVG version in grayscale colors only (reduces the file size).
+   */
+  grayscale?: boolean;
+}
+
+export interface DiagramConvertRequest extends DiagramConvertConfig {
+  items: DiagramConvertRequestItem[];
+}
+
+export interface DiagramConvertResponse
+  extends DiagramResponseBase,
+    DiagramConvertConfig {}
+
+export interface DiagramSvgPngResult extends ErrorMessage {
+  page: number;
+  /**
+   * The page of the file where the annotations in annotations were detected.
+   */
+  /**
+   * A signed URL to an interactive SVG version of the engineering diagram (valid for 10 minutes).
+   */
+  svgUrl: string;
+  /**
+   * A signed URL to a PNG version of the engineering diagram (valid for 10 minutes).
+   */
+  pngUrl: string;
+}
+
+export interface DiagramConvertResultItem
+  extends FileIdAndExternalId,
+    ErrorMessage {
+  results: DiagramSvgPngResult[];
+}
+
+export interface DiagramConvertResult
+  extends DiagramResponseBase,
+    DiagramConvertConfig {
+  items: DiagramConvertResultItem[];
 }
