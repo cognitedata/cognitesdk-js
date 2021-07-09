@@ -1,6 +1,6 @@
 // Copyright 2020 Cognite AS
 
-import { TemplateGroup } from 'beta/src/types';
+import { TemplateGroup, ExternalTemplateGroup } from 'beta/src/types';
 import { randomInt } from '@cognite/sdk-core/src/testUtils';
 import CogniteClient from '../../cogniteClient';
 import { setupLoggedInClient } from '../testUtils';
@@ -38,28 +38,24 @@ describe('template group test', () => {
     await cleanup();
   });
 
-  const sortByExternalId = (groups: TemplateGroup[]) => {
-    groups.sort((a, b) => a.externalId.length - b.externalId.length);
-  };
-
   it('should create template groups', async () => {
     const result = await client.templates.groups.create(templateGroups);
-    expect(sortByExternalId(result)).toEqual(
-      sortByExternalId(expectedTemplateGroups)
+    expect(result.map(toExternalTemplateGroup)).toEqual(
+      expect.arrayContaining(expectedTemplateGroups)
     );
   });
 
   it('should upsert template groups', async () => {
     const result = await client.templates.groups.upsert(templateGroups);
-    expect(sortByExternalId(result)).toEqual(
-      sortByExternalId(expectedTemplateGroups)
+    expect(result.map(toExternalTemplateGroup)).toEqual(
+      expect.arrayContaining(expectedTemplateGroups)
     );
   });
 
   it('should retrieve template groups', async () => {
     const result = await client.templates.groups.retrieve(templateGroups);
-    expect(sortByExternalId(result)).toEqual(
-      sortByExternalId(expectedTemplateGroups)
+    expect(result.map(toExternalTemplateGroup)).toEqual(
+      expect.arrayContaining(expectedTemplateGroups)
     );
   });
 
@@ -67,8 +63,8 @@ describe('template group test', () => {
     const result = await client.templates.groups
       .list()
       .autoPagingToArray({ limit: -1 });
-    expect(sortByExternalId(result)).toEqual(
-      sortByExternalId(expectedTemplateGroups)
+    expect(result.map(toExternalTemplateGroup)).toEqual(
+      expect.arrayContaining(expectedTemplateGroups)
     );
   });
 
@@ -79,4 +75,14 @@ describe('template group test', () => {
     );
     expect(result).toEqual({});
   });
+
+  function toExternalTemplateGroup(
+    templateGroup: TemplateGroup
+  ): ExternalTemplateGroup {
+    return {
+      externalId: templateGroup.externalId,
+      description: templateGroup.description,
+      owners: templateGroup.owners,
+    };
+  }
 });

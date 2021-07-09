@@ -124,9 +124,7 @@ class TemplateInstanceCodec {
   ): ExternalTemplateInstance[] {
     return templateInstances.map(item => {
       return {
-        externalId: item.externalId,
-        templateName: item.templateName,
-        dataSetId: item.dataSetId,
+        ...item,
         fieldResolvers: TemplateInstanceCodec.encodeFieldResolvers(
           item.fieldResolvers
         ),
@@ -159,9 +157,7 @@ class TemplateInstanceCodec {
   ): TemplateInstance[] {
     return templateInstances.map(item => {
       return {
-        externalId: item.externalId,
-        templateName: item.templateName,
-        dataSetId: item.dataSetId,
+        ...item,
         fieldResolvers: TemplateInstanceCodec.decodeFieldResolvers(
           item.fieldResolvers
         ),

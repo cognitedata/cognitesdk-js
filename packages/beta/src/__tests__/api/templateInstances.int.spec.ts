@@ -1,6 +1,6 @@
 // Copyright 2020 Cognite AS
 
-import { ExternalTemplateInstance } from '../../types';
+import { ExternalTemplateInstance, TemplateInstance } from '../../types';
 import CogniteClient from '../../cogniteClient';
 import { setupLoggedInClient } from '../testUtils';
 import { randomInt } from '@cognite/sdk-core/src/testUtils';
@@ -57,7 +57,7 @@ describe('template instances test', () => {
       .group(externalId)
       .version(1)
       .instances.create(expectedInstances);
-    expect(result).toEqual(expectedInstances);
+    expect(result.map(toExternalTemplateInstance)).toEqual(expectedInstances);
   });
 
   it('should upsert template instances', async () => {
@@ -65,7 +65,7 @@ describe('template instances test', () => {
       .group(externalId)
       .version(1)
       .instances.upsert(expectedInstances);
-    expect(result).toEqual(expectedInstances);
+    expect(result.map(toExternalTemplateInstance)).toEqual(expectedInstances);
   });
 
   it('should list template instances', async () => {
@@ -78,7 +78,7 @@ describe('template instances test', () => {
         },
       })
       .autoPagingToArray({ limit: -1 });
-    expect(result).toEqual(expectedInstances);
+    expect(result.map(toExternalTemplateInstance)).toEqual(expectedInstances);
   });
 
   it('should retrieve template instances', async () => {
@@ -88,7 +88,7 @@ describe('template instances test', () => {
       .instances.retrieve([{ externalId: 'foo' }, { externalId: 'bar' }], {
         ignoreUnknownIds: true,
       });
-    expect(result).toEqual(expectedInstances);
+    expect(result.map(toExternalTemplateInstance)).toEqual(expectedInstances);
   });
 
   it.skip('should delete template instances', async () => {
@@ -105,6 +105,17 @@ describe('template instances test', () => {
       .instances.retrieve([{ externalId: 'foo' }, { externalId: 'bar' }], {
         ignoreUnknownIds: true,
       });
-    expect(result).toEqual([]);
+    expect(result.map(toExternalTemplateInstance)).toEqual([]);
   });
+
+  function toExternalTemplateInstance(
+    instance: TemplateInstance
+  ): ExternalTemplateInstance {
+    return {
+      externalId: instance.externalId,
+      templateName: instance.templateName,
+      dataSetId: instance.dataSetId,
+      fieldResolvers: instance.fieldResolvers,
+    };
+  }
 });
