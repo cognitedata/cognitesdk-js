@@ -2,18 +2,18 @@
 
 import isString from 'lodash/isString';
 import isFunction from 'lodash/isFunction';
-import { CDFHttpClient } from './httpClient/cdfHttpClient';
+import { CDFHttpClient } from '../httpClient/cdfHttpClient';
 import {
   bearerString,
   clearParametersFromUrl,
   isLocalhost,
   isSameProject,
   isUsingSSL,
-} from './utils';
-import { CogniteLoginError } from './loginError';
-import { AUTHORIZATION_HEADER } from './constants';
-import { HttpCall, HttpHeaders } from './httpClient/basicHttpClient';
-import * as LoginUtils from './loginUtils';
+} from '../utils';
+import { CogniteLoginError } from '../loginError';
+import { AUTHORIZATION_HEADER } from '../constants';
+import { HttpCall, HttpHeaders } from '../httpClient/basicHttpClient';
+import * as LoginUtils from '../loginUtils';
 import {
   ACCESS_TOKEN_PARAM,
   AuthorizeOptions,
@@ -22,7 +22,7 @@ import {
   ERROR_PARAM,
   ID_TOKEN_PARAM,
   parseTokenQueryParameters,
-} from './loginUtils';
+} from '../loginUtils';
 
 export const REDIRECT = 'REDIRECT';
 export const POPUP = 'POPUP';

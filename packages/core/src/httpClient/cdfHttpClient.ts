@@ -68,9 +68,9 @@ export class CDFHttpClient extends RetryableHttpClient {
     return this;
   }
 
-  public setBearerToken(token: string) {
+  public setBearerToken = (token: string) => {
     this.setDefaultHeader(AUTHORIZATION_HEADER, bearerString(token));
-  }
+  };
 
   public set401ResponseHandler(handler: Response401Handler) {
     this.response401Handler = handler;

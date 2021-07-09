@@ -3,7 +3,12 @@
 import nock from 'nock';
 import { AUTHORIZATION_HEADER } from '../constants';
 import { CDFHttpClient } from '../httpClient/cdfHttpClient';
-import { CogniteAuthentication, getIdInfo, POPUP, REDIRECT } from '../auth';
+import {
+  CogniteAuthentication,
+  getIdInfo,
+  POPUP,
+  REDIRECT,
+} from '../authFlows/legacy';
 import * as LoginUtils from '../loginUtils';
 import { getLogoutUrl, loginWithRedirect } from '../loginUtils';
 import * as Utils from '../utils';

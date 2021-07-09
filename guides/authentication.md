@@ -79,12 +79,12 @@ After signing in, the browser window will be redirected back to your application
 ```js
 import { CogniteClient, REDIRECT } from '@cognite/sdk';
 const client = new CogniteClient({ ... });
-client.loginWithOAuth({
+client.loginWithOAuth({ type: 'CDF_OAUTH', options: {
   project: 'YOUR PROJECT NAME HERE',
   // default is redirect
   // but can be explicitly specified:
   onAuthenticate: REDIRECT,
-});
+}});
 
 // then use the SDK:
 const assets = await client.assets.retrieve({ id: 23232789217132 });
@@ -101,7 +101,7 @@ If you want a different redirect url back to your app after a successful / unsuc
 ```js
 import { CogniteClient, REDIRECT } from '@cognite/sdk';
 const client = new CogniteClient({ ... });
-client.loginWithOAuth({
+client.loginWithOAuth({ type: 'CDF_OAUTH', options: {
   project: 'YOUR PROJECT NAME HERE',
   onAuthenticate: login => {
     login.redirect({
@@ -109,7 +109,7 @@ client.loginWithOAuth({
       errorRedirectUrl: 'https://my-app.com/unsuccessful-login', // We encourage you to use this property as well. If not specified it will default to redirectUrl
     });
   },
-});
+}});
 ```
 
 ### Authentication with pop-up
@@ -130,10 +130,10 @@ if (isLoginPopupWindow()) {
   return;
 }
 const client = new CogniteClient({ ... });
-client.loginWithOAuth({
+client.loginWithOAuth({ type: 'CDF_OAUTH', options: {
   project: 'YOUR PROJECT NAME HERE',
   onAuthenticate: POPUP,
-});
+}});
 
 // then use the SDK:
 const assets = await client.assets.retrieve({ id: 23232789217132 });
@@ -154,7 +154,7 @@ If you want a different redirect url back to your application after a successful
 ```js
 import { CogniteClient, POPUP } from '@cognite/sdk';
 const client = new CogniteClient({ ... });
-client.loginWithOAuth({
+client.loginWithOAuth({ type: 'CDF_OAUTH', options: {
   project: 'YOUR PROJECT NAME HERE',
   onAuthenticate: login => {
     login.popup({
@@ -162,7 +162,7 @@ client.loginWithOAuth({
       errorRedirectUrl: 'https://my-app.com/unsuccessful-login', // We encourage you to use this property as well. If not specified it will default to redirectUrl
     });
   },
-});
+}});
 ```
 
 This only affect the pop-up window.
@@ -173,9 +173,9 @@ This only affect the pop-up window.
 
 To avoid waiting for the first `401`-response to occur you can trigger the authentication flow manually like this:
 ```js
-client.loginWithOAuth({
+client.loginWithOAuth({ type: 'CDF_OAUTH', options: {
   project: 'YOUR PROJECT NAME HERE',
-});
+}});
 await client.authenticate(); // this will also return a boolean based on if the user successfully authenticated or not.
 ```
 
@@ -183,10 +183,10 @@ await client.authenticate(); // this will also return a boolean based on if the 
 
 If you already have a access token you can use it to skip the authentication flow (see this [section](#tokens) on how to get hold of the token). If the token is invalid or timed out the SDK will trigger a standard auth-flow on the first 401-response from CDF.
 ```js
-client.loginWithOAuth({
+client.loginWithOAuth({ type: 'CDF_OAUTH', options: {
   project: 'YOUR PROJECT NAME HERE',
   accessToken: 'ACCESS TOKEN FOR THE PROJECT HERE',
-});
+}});
 ```
 > `client.authenticate()` will still override this and trigger a new authentication flow.
 
@@ -194,12 +194,12 @@ client.loginWithOAuth({
 
 It is possible to skip the authentication like this:
 ```js
-client.loginWithOAuth({
+client.loginWithOAuth({ type: 'CDF_OAUTH', options: {
   project: 'YOUR PROJECT NAME HERE',
   onAuthenticate: login => {
     login.skip();
   },
-});
+}});
 ```
 
 #### Combine different authentication methods
@@ -208,7 +208,7 @@ If you want to use redirect method in the initialization of your app and use the
 you can implement something like this:
 
 ```js
-client.loginWithOAuth({
+client.loginWithOAuth({ type: 'CDF_OAUTH', options: {
   project: 'YOUR PROJECT NAME HERE',
   onAuthenticate: login => {
     // some check:
@@ -218,7 +218,7 @@ client.loginWithOAuth({
       login.popup({ ... });
     }
   },
-});
+}});
 ```
 
 #### Tokens
@@ -226,12 +226,12 @@ client.loginWithOAuth({
 If you need access to the tokens (access token, id token) from the login flow you can add a callback like this:
 
 ```js
-client.loginWithOAuth({
+client.loginWithOAuth({ type: 'CDF_OAUTH', options: {
   project: 'YOUR PROJECT NAME HERE',
   onTokens: ({accessToken, idToken}) => {
     // your logic here
   },
-});
+}});
 ```
 
 ### More
@@ -269,7 +269,7 @@ After signing in, the browser window will be redirected back to your application
 
 > You might find useful example application using redirect Azure AD auth flow [here](../samples/react/authentication-aad/src/App.js).
 > Remember to provide the required environment variables in the `.env` file.
- 
+
 #### Redirect sign in type example
 
 ```js
@@ -278,11 +278,11 @@ const client = new CogniteClient({ ... });
 
 // tenantId parameter can be skipped in order to use,
 // https://login.microsoftonline.com/common endpoint to authenticate user
-client.loginWithOAuth({
+client.loginWithOAuth({ type: 'AAD_OAUTH', options: {
   cluster: 'cdf-cluster-name',
   clientId: 'azure-application-client-id',
   tenantId: 'azure-tenant-id'
-});
+}});
 
 // authenticate to the provided cluster
 await client.authenticate();
@@ -297,7 +297,7 @@ const assets = await client.assets.retrieve({ id: 23232789217132 });
 With the call `await client.authenticate()` you'll be redirected to the IdP to sign in.
 After you have signed in, you'll be redirected back and `await client.authenticate()` call
 will return you `true` as a result of the successful login. It is important
-to set project for the `CogniteClient` instance via `client.setProject('project-name')` 
+to set project for the `CogniteClient` instance via `client.setProject('project-name')`
 
 ### Authentication via pop-up
 
@@ -313,12 +313,12 @@ const client = new CogniteClient({ ... });
 
 // tenantId parameter can be skipped in order to use,
 // https://login.microsoftonline.com/common endpoint to authenticate user
-client.loginWithOAuth({
+client.loginWithOAuth({ type: 'AAD_OAUTH', options: {
   cluster: 'cdf-cluster-name',
   clientId: 'azure-application-client-id',
   tenantId: 'azure-tenant-id',
   signInType: AZURE_AUTH_POPUP,
-});
+}});
 
 // authenticate to the provided cluster
 await client.authenticate();
@@ -343,11 +343,11 @@ This method works only for Azure AD authentication flow. You can also check whic
 import { CogniteClient, AZURE_AUTH_POPUP, AAD_OAUTH } from '@cognite/sdk';
 const client = new CogniteClient({ ... });
 
-client.loginWithOAuth({
+client.loginWithOAuth({ type: 'AAD_OAUTH', options: {
   cluster: 'cdf-cluster-name',
   clientId: 'azure-application-client-id',
   signInType: AZURE_AUTH_POPUP,
-});
+}});
 
 // authenticate to the provided cluster
 await client.authenticate();

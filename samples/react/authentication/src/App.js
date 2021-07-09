@@ -50,11 +50,11 @@ const App = () => {
 
   useEffect(() => {
     const init = async () => {
-      const result = await client.loginWithOAuth({
+      const result = await client.loginWithOAuth({ type: 'CDF_OAUTH', options: {
         project,
         onAuthenticate: 'REDIRECT',
         onHandleRedirectError
-      });
+      }});
 
       setIsInit(true);
       setIsSignedIn(result);

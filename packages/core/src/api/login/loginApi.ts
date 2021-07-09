@@ -2,7 +2,7 @@
 
 import { BaseResourceAPI } from '../../baseResourceApi';
 import { CDFHttpClient } from '../../httpClient/cdfHttpClient';
-import { getIdInfo, IdInfo } from '../../auth';
+import { getIdInfo, IdInfo } from '../../authFlows/legacy';
 import { MetadataMap } from '../../metadata';
 
 export class LoginAPI extends BaseResourceAPI<any> {
@@ -13,6 +13,8 @@ export class LoginAPI extends BaseResourceAPI<any> {
 
   /**
    * [Check login status](https://doc.cognitedata.com/api/v1/#operation/status)
+   *
+   * @deprecated
    *
    * ```js
    * const status = await client.login.status();

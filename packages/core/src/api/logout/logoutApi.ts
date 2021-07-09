@@ -14,6 +14,8 @@ export class LogoutApi extends BaseResourceAPI<any> {
   /**
    * [Retrieve a logout url](https://docs.cognite.com/api/v1/#operation/logoutUrl)
    *
+   * @deprecated
+   *
    * ```js
    * // You can specify the url to send the user to after the logout is successful.
    * // If no url is passed, you will end up at the IDPs log out page.

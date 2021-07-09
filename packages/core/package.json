@@ -14,6 +14,7 @@
     "lint:fix": "yarn lint --fix",
     "prepublishOnly": "yarn build",
     "build": "yarn clean && yarn rollup -c && yarn esCheck",
+    "build:watch": "yarn rollup -w -c",
     "watch": "rollup -cw",
     "esCheck": "es-check es5 './dist/index.js'",
     "docs": "typedoc --options typedoc.js --tsconfig tsconfig.json src/index.ts",
@@ -24,6 +25,7 @@
     "cross-fetch": "^3.0.4",
     "is-buffer": "^2.0.5",
     "lodash": "^4.17.11",
+    "openid-client": "^4.7.4",
     "query-string": "^5.1.1",
     "url": "^0.11.0"
   },

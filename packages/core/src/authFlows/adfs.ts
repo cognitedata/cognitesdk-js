@@ -3,8 +3,8 @@
 import { parse } from 'query-string';
 import isString from 'lodash/isString';
 import noop from 'lodash/noop';
-import { clearParametersFromUrl } from './utils';
-import { silentLoginViaIframe } from './loginUtils';
+import { clearParametersFromUrl } from '../utils';
+import { silentLoginViaIframe } from '../loginUtils';
 
 export interface ADFSConfig {
   authority: string;

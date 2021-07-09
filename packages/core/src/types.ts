@@ -110,3 +110,11 @@ export interface AutoPagingToArrayOptions {
 export type AutoPagingToArray<T> = (
   options?: AutoPagingToArrayOptions
 ) => Promise<T[]>;
+
+export type OAuthLoginResult = [() => Promise<boolean>, (string | null)];
+
+export interface FlowCallbacks {
+  setCluster: (s: string) => void;
+  setBearerToken: (s: string) => void;
+  validateAccessToken: (s: string) => Promise<boolean>;
+}
