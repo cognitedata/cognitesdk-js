@@ -95,6 +95,17 @@ describe('template view test', () => {
       });
   });
 
+  it('should delete view', async () => {
+    await client.templates
+      .group(externalId)
+      .version(1)
+      .views.delete([
+        {
+          externalId: expectedViews[0].externalId,
+        },
+      ]);
+  });
+
   function toExternalView(view: View): ExternalView {
     return {
       externalId: view.externalId,

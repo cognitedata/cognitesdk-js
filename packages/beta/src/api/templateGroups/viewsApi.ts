@@ -2,6 +2,7 @@ import {
   BaseResourceAPI,
   CursorAndAsyncIterator,
   CursorResponse,
+  ExternalId,
 } from '@cognite/sdk-core';
 import {
   View,
@@ -39,5 +40,17 @@ export class ViewsApi extends BaseResourceAPI<View> {
       resolveFetch as any,
       resolveRequest
     ) as unknown) as CursorAndAsyncIterator<T>;
+  };
+
+  public delete = (
+    ids: ExternalId[],
+    options?: { ignoreUnknownIds: boolean }
+  ) => {
+    return super.deleteEndpoint(
+      ids,
+      options || {
+        ignoreUnknownIds: false,
+      }
+    );
   };
 }
