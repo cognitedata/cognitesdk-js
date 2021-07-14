@@ -1,0 +1,31 @@
+{
+  "private": false,
+  "name": "@cognite/sdk-playground",
+  "license": "Apache-2.0",
+  "repository": "cognitedata/cognite-sdk-js",
+  "homepage": "https://github.com/cognitedata/cognite-sdk-js#readme",
+  "main": "dist/index.js",
+  "types": "dist/src/index.d.ts",
+  "version": "3.0.2",
+  "scripts": {
+    "clean": "rm -rf dist/ docs/",
+    "test": "jest --config=../../jest.config.js --testPathPattern=/playground/",
+    "lint": "eslint 'src/**/*.{js,ts}'",
+    "lint:fix": "yarn lint --fix",
+    "prepublishOnly": "yarn build",
+    "build": "yarn clean && rollup -c && yarn esCheck",
+    "watch": "rollup -cw",
+    "esCheck": "es-check es5 './dist/index.js'",
+    "docs": "typedoc --options typedoc.js --tsconfig tsconfig.json src/index.ts",
+    "docs:bundle": "yarn docs && mkdir -p ../../docs/playground && cp -r docs/* ../../docs/playground/",
+    "extract-snippets": "",
+    "test-snippets": ""
+  },
+  "dependencies": {
+    "@cognite/sdk": "^4.3.0",
+    "@cognite/sdk-core": "^2.2.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
