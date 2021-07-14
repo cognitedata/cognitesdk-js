@@ -21,7 +21,7 @@ This will download `@cognite/sdk-beta` and pretend it is `@cognite/sdk`.
 With the beta package installed under an alias, you don't need to modify your code
 to access beta features. Import the `CogniteClient` as you normally would:
 ```js
-import { CogniteClient } from '@congite/sdk';
+import { CogniteClient } from '@cognite/sdk';
 ```
 
 ## Documentation
